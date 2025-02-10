@@ -37,23 +37,24 @@ export const login = async (req: Request, res: Response) : Promise<void> => {
         // const [results] = await pool.query("select * from users where username = ?", [username]);
         // const user = results[0];
         const user = await createUser();
-        console.log(user);
-
-        console.log(`Input User: ${username}, ${password}`);
-        
-        
         if (user.username === username && await bcrypt.compare(password, user.password)) {
             const accessToken = generateAccessToken({ username: user.username, email: user.email });
             // set cookies access token
             // setCookie('access token', accessToken, { expires: 1 });
-            res.cookie('myCookie', accessToken, { maxAge: 900000, httpOnly: true });
+            res.cookie('accessToken', accessToken, { signed: true, maxAge: 900000, httpOnly: true, domain: "localhost", secure: true });
             const refreshToken = generateRefreshToken({ username: user.username, email: user.email });
             // refreshTokens.push(refreshToken); // Store refresh token
             res.status(200).json({ accessToken, refreshToken });
         } else {
             res.status(401).json({ message: "Invalid credential" });
         }
+
     } catch (error) {
         res.status(500).json({ message: "Login error" });
     }
 }
+
+export const getCookies = async (req: Request, res: Response) => {
+    const cookies = req.signedCookies;
+    res.send(JSON.stringify(cookies));
+};
