@@ -4,8 +4,9 @@ import cookieParser from 'cookie-parser';
 const app = express.Router();
 app.use(cookieParser('yourSecretKey'));
 
-import { login } from "../controllers/auth";
+import { login, getCookies } from "../controllers/auth";
 
 app.get('/login', login);
+app.get('/getCookies', getCookies);
 
 export default app;

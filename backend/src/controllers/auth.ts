@@ -56,5 +56,5 @@ export const login = async (req: Request, res: Response) : Promise<void> => {
 
 export const getCookies = async (req: Request, res: Response) => {
     const cookies = req.signedCookies;
-    res.send(`Signed cookies: ${JSON.stringify(cookies)}`);
+    res.send(JSON.stringify(cookies));
 };
