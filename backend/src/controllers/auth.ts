@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 import { Secret } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import { User, UserPayload } from '../interfaces/User';
+import { User} from '../interfaces/User';
 import { generateAccessToken, generateRefreshToken, verifyToken } from '../utils/jwtUtils';
+import { redisClient } from '../config/redis';
 
 // User
 const createUser = async () => {
@@ -28,7 +29,9 @@ export const login = async (req: Request, res: Response) => {
             // set cookies access and refresh token
             res.cookie('accessToken', accessToken, { signed: true, maxAge: 900000, httpOnly: true, domain: "localhost", secure: true });
             const refreshToken = generateRefreshToken({ username: user.username, email: user.email });
-            refreshTokens.push(refreshToken);
+            // refreshTokens.push(refreshToken);
+            // Store refresh token in Redis
+            await redisClient.set(user.username, refreshToken);
             res.cookie('refreshToken', refreshToken, { signed: true, maxAge: 604800000, httpOnly: true, domain: "localhost", secure: true });
             res.status(200).json({ accessToken, refreshToken });
         } else {
