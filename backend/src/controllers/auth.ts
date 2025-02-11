@@ -1,19 +1,11 @@
 import { Request, Response } from 'express';
+import { Secret } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
-import jwt, { Secret } from 'jsonwebtoken';
-import { getCookie, setCookie } from 'typescript-cookie';
-// import { config } from "dotenv";
-
-// config();
+import { User, UserPayload } from '../interfaces/User';
+import { generateAccessToken, generateRefreshToken, verifyToken } from '../utils/jwtUtils';
 
 // User
-interface User {
-    username: string;
-    email: string;
-    password: string;
-}
 const createUser = async () => {
-    // const hashedPassword = await bcrypt.hash("password", 10);
     const user: User = {
         username: "username",
         email: "john@example.com",
@@ -23,15 +15,9 @@ const createUser = async () => {
     return user;
 }
 
-const generateAccessToken = (user: object) => {
-    return jwt.sign(user, process.env.ACCESS_TOKEN_SECRET as Secret, { expiresIn: '150m' });
-};
+let refreshTokens: string[] = [];
 
-const generateRefreshToken = (user: object) => {
-    return jwt.sign(user, process.env.REFRESH_TOKEN_SECRET as Secret);
-};
-
-export const login = async (req: Request, res: Response) : Promise<void> => {
+export const login = async (req: Request, res: Response) => {
     const { username, password }: { username: string; password: string } = req.body;
     try {
         // const [results] = await pool.query("select * from users where username = ?", [username]);
@@ -39,16 +25,15 @@ export const login = async (req: Request, res: Response) : Promise<void> => {
         const user = await createUser();
         if (user.username === username && await bcrypt.compare(password, user.password)) {
             const accessToken = generateAccessToken({ username: user.username, email: user.email });
-            // set cookies access token
-            // setCookie('access token', accessToken, { expires: 1 });
+            // set cookies access and refresh token
             res.cookie('accessToken', accessToken, { signed: true, maxAge: 900000, httpOnly: true, domain: "localhost", secure: true });
             const refreshToken = generateRefreshToken({ username: user.username, email: user.email });
-            // refreshTokens.push(refreshToken); // Store refresh token
+            refreshTokens.push(refreshToken);
+            res.cookie('refreshToken', refreshToken, { signed: true, maxAge: 604800000, httpOnly: true, domain: "localhost", secure: true });
             res.status(200).json({ accessToken, refreshToken });
         } else {
             res.status(401).json({ message: "Invalid credential" });
         }
-
     } catch (error) {
         res.status(500).json({ message: "Login error" });
     }
@@ -57,4 +42,23 @@ export const login = async (req: Request, res: Response) : Promise<void> => {
 export const getCookies = async (req: Request, res: Response) => {
     const cookies = req.signedCookies;
     res.send(JSON.stringify(cookies));
+};
+
+export const refreshToken = (req: Request, res: Response): void => {
+    const { refreshToken }: { refreshToken: string } = req.body;
+    if (!refreshToken) {
+        res.status(401).json({ message: 'Refresh token is required' });
+        return;
+    }
+    if (!refreshTokens.includes(refreshToken)) {
+        res.status(403).json({ message: 'Invalid refresh token' });
+        return;
+    }
+    try {
+        const userPayload = verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET as Secret);
+        const accessToken = generateAccessToken(userPayload);
+        res.status(200).json({ accessToken });
+    } catch (error) {
+        res.status(403).json({ message: 'Invalid or expired refresh token' });
+    }
 };

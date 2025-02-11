@@ -4,9 +4,11 @@ import cookieParser from 'cookie-parser';
 const app = express.Router();
 app.use(cookieParser('yourSecretKey'));
 
-import { login, getCookies } from "../controllers/auth";
+import { login, getCookies, refreshToken } from "../controllers/auth";
 
-app.get('/login', login);
+app.post('/login', login);
 app.get('/getCookies', getCookies);
+
+app.post('/refreshToken', refreshToken);
 
 export default app;
