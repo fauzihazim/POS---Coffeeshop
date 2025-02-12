@@ -14,9 +14,4 @@ redisClient.connect().then(() => {
     console.log('Connected to Redis');
 });
 
-const connectRedis = async () => {
-    await redisClient.connect();
-    console.log('Connected to Redis');
-};
-
 export { redisClient };
