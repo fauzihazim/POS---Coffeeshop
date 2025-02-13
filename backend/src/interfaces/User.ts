@@ -1,8 +1,8 @@
 export interface User {
-    Username: string;
-    Email: string;
-    Password: string;
-    Role: string;
+    username: string;
+    email: string;
+    password: string;
+    role: string;
 };
 
 export interface UserPayload {

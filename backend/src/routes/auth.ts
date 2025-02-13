@@ -8,7 +8,6 @@ import { login, getCookies, refreshToken } from "../controllers/auth";
 
 app.post('/login', login);
 app.get('/getCookies', getCookies);
-
 app.post('/refreshToken', refreshToken);
 
 export default app;
