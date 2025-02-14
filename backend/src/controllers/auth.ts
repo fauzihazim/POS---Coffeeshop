@@ -46,16 +46,18 @@ export const login = async (req: Request, res: Response) => {
     }
 }
 
-export const getCookies = async (req: Request, res: Response) => {
-    const cookies = getSpesificCookies(req, res, "accessToken");
-    res.send(JSON.stringify(cookies));
+export const getCookie = async (req: Request, res: Response) => {
+    const cookies = await getSpesificCookies(req, res);
+    res.status(200).json({ cookies });
 };
 
-const getSpesificCookies = async (req: Request, res: Response, cookieName: String) => {
+const getSpesificCookies = async (req: Request, res: Response) => {
     const cookies = req.signedCookies;
     if (cookies) {
-        console.log("Cookies access token :", req.signedCookies.accessToken);
-        return req.signedCookies.accessToken;
+        const accessToken = req.signedCookies.accessToken;
+        console.log("The access token ", accessToken);
+        
+        return accessToken;
     } else {
         res.status(404).send({ error: 'Cookie not found' });
         return 0;
