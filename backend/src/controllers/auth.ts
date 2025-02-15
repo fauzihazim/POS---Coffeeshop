@@ -9,18 +9,7 @@ import { redisClient } from '../config/redis';
 import { pool } from '../config/db';
 
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET as Secret;
-
-// User
-const createUser = async () => {
-    const user: User = {
-        username: "username",
-        email: "john@example.com",
-        password: await bcrypt.hash("password", 10),
-        role: "Barista"
-    };
-    console.log(`Password: ${user.password}`);
-    return user;
-}
+const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET as Secret;
 
 export const login = async (req: Request, res: Response) => {
     const { username, password }: { username: string; password: string } = req.body;
@@ -29,7 +18,7 @@ export const login = async (req: Request, res: Response) => {
         // Type assertion for results
         const result = results as User[];
         const user = result[0];
-        if (user.username) {
+        if (user.username && await bcrypt.compare(password, user.password)) {
             const accessToken = generateAccessToken({ username: user.username, email: user.email, role: user.role });
             // set cookies access and refresh token
             res.cookie('accessToken', accessToken, { signed: true, maxAge: 1200000, httpOnly: true, domain: "localhost", secure: true });
@@ -37,18 +26,18 @@ export const login = async (req: Request, res: Response) => {
             await redisClient.set(user.username, refreshToken, {
                 EX: 24 * 60 * 60, // Set expiration time to 24 hours
             });
-            res.status(200).json({ accessToken, refreshToken });
+            res.status(200).json({ status: "success", accessToken, refreshToken });
         } else {
-            res.status(401).json({ message: "Invalid credential" });
+            res.status(401).json({ status: "failed", message: "Invalid credential" });
         }
     } catch (err) {
-        res.status(500).json({ message: "Login error" });
+        res.status(500).json({ status: "failed", message: "Login error" });
     }
 }
 
 export const getCookie = async (req: Request, res: Response) => {
     const cookies = await getSpesificCookies(req, res);
-    res.status(200).json({ cookies });
+    res.status(200).json({ status: "success", cookies });
 };
 
 const getSpesificCookies = async (req: Request, res: Response) => {
@@ -59,26 +48,69 @@ const getSpesificCookies = async (req: Request, res: Response) => {
         
         return accessToken;
     } else {
-        res.status(404).send({ error: 'Cookie not found' });
-        return 0;
+        res.status(404).send({ status: "failed", error: 'Cookie not found' });
+        return;
     }
-}
+};
+
+const tokenDecoder = (token: string, tokenSecret: Secret) => {
+    return jwt.verify(token, tokenSecret) as DecodedToken;
+};
 
 export const refreshToken = async (req: Request, res: Response) => {
     const accessToken = req.signedCookies.accessToken;
-    const decodedToken = jwt.verify(accessToken, ACCESS_TOKEN_SECRET) as DecodedToken;
+    // const decodedToken = jwt.verify(accessToken, ACCESS_TOKEN_SECRET) as DecodedToken;
+    const decodedToken = tokenDecoder(accessToken, ACCESS_TOKEN_SECRET);
+    console.log('Decoded Token is: ', decodedToken);
+    
     const username = decodedToken.username;
     const refreshToken: string | null = await redisClient.get(username);
 
     if (!refreshToken) {
-        res.status(401).json({ message: 'Refresh token is required' });
+        res.status(401).json({ status: "failed", message: 'Refresh token is required' });
         return;
     };
     try {
         verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET as Secret);
         const accessToken = generateAccessToken({ username: decodedToken.username, email: decodedToken.email, role: decodedToken.role });
-        res.status(200).json({ accessToken });
+        res.status(200).json({ status: "success", accessToken });
     } catch (error) {
-        res.status(403).json({ message: 'Invalid or expired refresh token' });
+        res.status(403).json({ status: "failed", message: 'Invalid or expired refresh token' });
     }
 };
+
+export const clearCookie = (req: Request, res: Response) => {
+    res.clearCookie("accessToken");
+    res.status(200).json({ status: "success", msg: "clear" });
+}
+
+const addTokenBlacklist = async (token: string | unknown, secret: Secret, tokenType: "AccessToken" | "RefreshToken") => {
+    console.log(`Token: ${token}, token type: ${tokenType}`);
+    const decodedToken = tokenDecoder(token as string, secret);
+    const expiry = decodedToken.exp as number - Math.floor(Date.now() / 1000);
+    await redisClient.set(`blacklist${tokenType}:${token}`, 'true', { EX: expiry });
+};
+
+export const logOut = async (req: Request, res: Response) => {
+    try {
+        const accessToken = req.signedCookies.accessToken;
+        if (!accessToken) {
+            res.status(401).json({ status: "failed", message: "Access token is required" });
+            return;
+        };
+        const decodedToken =  tokenDecoder(accessToken, ACCESS_TOKEN_SECRET);
+        const username = decodedToken.username;
+        const refreshToken = await redisClient.get(username);
+        if (!refreshToken) {
+            res.status(401).json({ status: "failed", message: "Refresh token is required" });
+            return;
+        };
+        addTokenBlacklist(accessToken, ACCESS_TOKEN_SECRET, "AccessToken");         // Add token blacklist for access token
+        addTokenBlacklist(refreshToken, REFRESH_TOKEN_SECRET, "RefreshToken");      // Add token blacklist for refresh token
+        res.clearCookie("accessToken");                                             // clear cookie for accessToken
+        await redisClient.del(username);                                            // clear cookie in redis
+        res.status(200).json({ status: "success", msg: "Log out successfully" });
+    } catch (error) {
+        res.status(403).json({ status: "failed", message: 'Invalid or expired refresh token' });
+    }
+}
