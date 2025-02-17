@@ -3,17 +3,35 @@ import { redisClient } from '../config/redis';
 import jwt, { Secret } from 'jsonwebtoken';
 import { UserPayload } from '../interfaces/User';
 
+const getAccessToken = (req: Request, res: Response) => {
+    return res.locals.accessToken = req.signedCookies.accessToken;
+};
+
+const getRefreshToken = async (username: string) => {
+    return await redisClient.get(username);
+};
+
+const verifyAccessToken = (req: Request, res: Response, token: string) => {
+    return res.locals.decodedAccessToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET as Secret) as UserPayload;
+};
+
+const verifyRefreshToken = (req: Request, res: Response, token: string) => {
+    return res.locals.decodedRefreshToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET as Secret) as UserPayload;
+};
+
+
 export const authenticateAccessToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Get access token
-        const accessToken = req.signedCookies.accessToken;
+        const accessToken = res.locals.accessToken || getAccessToken(req, res);
+        console.log("First access token ", accessToken);
+        
+        // const accessToken = getAccessToken(req, res);
         if (!accessToken) {
             res.status(401).json({ message: 'Access token is required' });
         }
         // Verify the access token
-        const decodedAccessToken = verifyToken(accessToken, process.env.ACCESS_TOKEN_SECRET as Secret);
+        const decodedAccessToken = verifyAccessToken(req, res, accessToken);
         console.log("Decoded access token ", decodedAccessToken);
-        res.locals.accessToken = accessToken;
         res.locals.decodedAccessToken = decodedAccessToken; // Attach the decoded user data to the request object
         next(); // Proceed to the next middleware or route handler
     } catch (error) {
@@ -29,7 +47,9 @@ export const authenticateAccessToken = async (req: Request, res: Response, next:
 
 export const authenticateRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const decodedAccessToken = res.locals.decodedAccessToken;
+        console.log("Second access token", res.locals.accessToken);
+        
+        const decodedAccessToken = res.locals.decodedAccessToken || verifyAccessToken(req, res, res.locals.accessToken || getAccessToken(req, res));
         // Get refresh token
         const refreshToken = await getRefreshToken(decodedAccessToken.username);
         if (!refreshToken) {
@@ -37,7 +57,7 @@ export const authenticateRefreshToken = async (req: Request, res: Response, next
         }
         console.log("refresh token", refreshToken);
         // Verify the refresh token
-        const decodedRefreshToken = verifyToken(refreshToken as unknown as string, process.env.REFRESH_TOKEN_SECRET as Secret);
+        const decodedRefreshToken = verifyRefreshToken(req, res, refreshToken as string);
         console.log("Decoded refresh token ", decodedRefreshToken);
         res.locals.refreshToken = refreshToken;
         res.locals.decodedRefreshToken = decodedRefreshToken;
@@ -51,12 +71,4 @@ export const authenticateRefreshToken = async (req: Request, res: Response, next
             res.status(500).json({ message: 'Internal server error' });
         }
     }
-}
-
-const verifyToken = (token: string, secret: Secret) => {
-    return jwt.verify(token, secret) as UserPayload;
 };
-
-const getRefreshToken = async (username: string) => {
-    return await redisClient.get(username);
-}
