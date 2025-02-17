@@ -1,14 +1,18 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import { login, getCookie, refreshToken, logOut, clearCookie } from "../controllers/auth";
+// import { checkAccessTokenIsRequire, checkBlacklist, checkRefreshTokenIsRequire, decodedAccessToken, verifyRefreshToken, decodedRefreshToken } from '../middleware/authMiddleware';
+import { authenticateAccessToken, authenticateRefreshToken } from '../middleware/authMiddleware';
+// Middleware
+// const refreshTokenMiddleware = [checkAccessTokenIsRequire, decodedAccessToken, checkRefreshTokenIsRequire, decodedRefreshToken, verifyRefreshToken, checkBlacklist];
 
 const app = express.Router();
 app.use(cookieParser('yourSecretKey'));
 
-import { login, getCookie, refreshToken, logOut, clearCookie } from "../controllers/auth";
-
 app.post('/login', login);
-app.get('/getCookie', getCookie);
-app.post('/refreshToken', refreshToken);
+app.get('/getCookie', authenticateAccessToken, authenticateRefreshToken, getCookie);
+// app.post('/refreshToken', ...refreshTokenMiddleware, refreshToken);
+// app.post
 app.post('/logOut', logOut);
 app.get('/clearCookie', clearCookie);
 

@@ -26,7 +26,9 @@ export const login = async (req: Request, res: Response) => {
             await redisClient.set(user.username, refreshToken, {
                 EX: 24 * 60 * 60, // Set expiration time to 24 hours
             });
-            res.status(200).json({ status: "success", accessToken, refreshToken });
+            // console.log("Header", req.headers.authorization);
+            
+            res.status(200).json({ status: "success", message: "Login successfully", data: { accessToken, refreshToken } });
         } else {
             res.status(401).json({ status: "failed", message: "Invalid credential" });
         }
@@ -37,7 +39,7 @@ export const login = async (req: Request, res: Response) => {
 
 export const getCookie = async (req: Request, res: Response) => {
     const cookies = await getSpesificCookies(req, res);
-    res.status(200).json({ status: "success", cookies });
+    res.status(200).json({ status: "success", message: "Get cookies successfully", data: { cookies } });
 };
 
 const getSpesificCookies = async (req: Request, res: Response) => {
@@ -53,27 +55,42 @@ const getSpesificCookies = async (req: Request, res: Response) => {
     }
 };
 
-const tokenDecoder = (token: string, tokenSecret: Secret) => {
-    return jwt.verify(token, tokenSecret) as DecodedToken;
+const tokenDecoder = (token: string) => {
+    const arrayToken = token.split('.');
+    console.log("Array Token: ", arrayToken);
+    const decoder = JSON.parse(atob(arrayToken[1]));
+    console.log("The decoder ", decoder);
+    return decoder;
 };
 
 export const refreshToken = async (req: Request, res: Response) => {
-    const accessToken = req.signedCookies.accessToken;
-    // const decodedToken = jwt.verify(accessToken, ACCESS_TOKEN_SECRET) as DecodedToken;
-    const decodedToken = tokenDecoder(accessToken, ACCESS_TOKEN_SECRET);
-    console.log('Decoded Token is: ', decodedToken);
+    // const accessToken = req.signedCookies.accessToken;
+    const accessToken = res.locals.accessToken;
+    console.log("The accessToken from res", accessToken);
     
-    const username = decodedToken.username;
-    const refreshToken: string | null = await redisClient.get(username);
+    // const decodedToken = jwt.verify(accessToken, ACCESS_TOKEN_SECRET) as DecodedToken;
+    // const decodedToken = tokenDecoder(accessToken, ACCESS_TOKEN_SECRET);
+    // console.log('Decoded Token is: ', decodedToken);
+    
+    // const username = decodedToken.username;
+    // const refreshToken: string | null = await redisClient.get(username);
 
-    if (!refreshToken) {
-        res.status(401).json({ status: "failed", message: 'Refresh token is required' });
-        return;
-    };
+    // if (!refreshToken) {
+    //     res.status(401).json({ status: "failed", message: 'Refresh token is required' });
+    //     return;
+    // };
+    const refreshToken = res.locals.refreshToken;
+    const decodedToken = res.locals.decodedAccessToken;
+    console.log("THe decoded 1 : ", decodedToken);
     try {
-        verifyToken(refreshToken, process.env.REFRESH_TOKEN_SECRET as Secret);
+        console.log("THe decoded 2 : ", decodedToken);
+        // if (verifyToken(refreshToken, REFRESH_TOKEN_SECRET)) {
+        //     res.status(403).json({ status: "failed", message: "Failed bro" })
+        // };
+        
+        // verifyToken(refreshToken, REFRESH_TOKEN_SECRET);
         const accessToken = generateAccessToken({ username: decodedToken.username, email: decodedToken.email, role: decodedToken.role });
-        res.status(200).json({ status: "success", accessToken });
+        res.status(200).json({ status: "success", message: "Token refreshed", data: { accessToken } });
     } catch (error) {
         res.status(403).json({ status: "failed", message: 'Invalid or expired refresh token' });
     }
@@ -81,14 +98,19 @@ export const refreshToken = async (req: Request, res: Response) => {
 
 export const clearCookie = (req: Request, res: Response) => {
     res.clearCookie("accessToken");
-    res.status(200).json({ status: "success", msg: "clear" });
+    res.status(200).json({ status: "success", message: "Cookie cleared" });
 }
 
 const addTokenBlacklist = async (token: string | unknown, secret: Secret, tokenType: "AccessToken" | "RefreshToken") => {
     console.log(`Token: ${token}, token type: ${tokenType}`);
-    const decodedToken = tokenDecoder(token as string, secret);
-    const expiry = decodedToken.exp as number - Math.floor(Date.now() / 1000);
-    await redisClient.set(`blacklist${tokenType}:${token}`, 'true', { EX: expiry });
+    const decodedToken = tokenDecoder(token as string);
+    let expiry = decodedToken.exp as number - Math.floor(Date.now() / 1000);
+    console.log("Expired before: ", expiry);
+    if (expiry <= 0) {
+        expiry = 1; 
+    }
+    console.log("Expired after: ", expiry);
+    await redisClient.set(`blacklist:${tokenType}:${token}`, 'true', { EX: expiry });
 };
 
 export const logOut = async (req: Request, res: Response) => {
@@ -98,7 +120,7 @@ export const logOut = async (req: Request, res: Response) => {
             res.status(401).json({ status: "failed", message: "Access token is required" });
             return;
         };
-        const decodedToken =  tokenDecoder(accessToken, ACCESS_TOKEN_SECRET);
+        const decodedToken = tokenDecoder(accessToken);
         const username = decodedToken.username;
         const refreshToken = await redisClient.get(username);
         if (!refreshToken) {
@@ -109,7 +131,8 @@ export const logOut = async (req: Request, res: Response) => {
         addTokenBlacklist(refreshToken, REFRESH_TOKEN_SECRET, "RefreshToken");      // Add token blacklist for refresh token
         res.clearCookie("accessToken");                                             // clear cookie for accessToken
         await redisClient.del(username);                                            // clear cookie in redis
-        res.status(200).json({ status: "success", msg: "Log out successfully" });
+        // verifyToken(refreshToken, REFRESH_TOKEN_SECRET);                            // check if it expire
+        res.status(200).json({ status: "success", message: "Log out successfully" });
     } catch (error) {
         res.status(403).json({ status: "failed", message: 'Invalid or expired refresh token' });
     }
