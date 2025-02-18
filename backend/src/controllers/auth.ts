@@ -101,7 +101,7 @@ export const clearCookie = (req: Request, res: Response) => {
     res.status(200).json({ status: "success", message: "Cookie cleared" });
 }
 
-const addTokenBlacklist = async (token: string | unknown, secret: Secret, tokenType: "AccessToken" | "RefreshToken") => {
+const addTokenBlacklist = async (token: string | unknown, tokenType: "AccessToken" | "RefreshToken") => {
     console.log(`Token: ${token}, token type: ${tokenType}`);
     const decodedToken = tokenDecoder(token as string);
     let expiry = decodedToken.exp as number - Math.floor(Date.now() / 1000);
@@ -115,22 +115,25 @@ const addTokenBlacklist = async (token: string | unknown, secret: Secret, tokenT
 
 export const logOut = async (req: Request, res: Response) => {
     try {
-        const accessToken = req.signedCookies.accessToken;
+        // const accessToken = req.signedCookies.accessToken;
+        const accessToken = res.locals.accessToken;
+        const refreshToken = res.locals.refreshToken;
+        const decodedAccessToken = res.locals.decodedAccessToken;
         if (!accessToken) {
             res.status(401).json({ status: "failed", message: "Access token is required" });
             return;
         };
-        const decodedToken = tokenDecoder(accessToken);
-        const username = decodedToken.username;
-        const refreshToken = await redisClient.get(username);
-        if (!refreshToken) {
-            res.status(401).json({ status: "failed", message: "Refresh token is required" });
-            return;
-        };
-        addTokenBlacklist(accessToken, ACCESS_TOKEN_SECRET, "AccessToken");         // Add token blacklist for access token
-        addTokenBlacklist(refreshToken, REFRESH_TOKEN_SECRET, "RefreshToken");      // Add token blacklist for refresh token
+        // const decodedToken = tokenDecoder(accessToken);
+        // const username = decodedToken.username;
+        // // const refreshToken = await redisClient.get(username);
+        // if (!refreshToken) {
+        //     res.status(401).json({ status: "failed", message: "Refresh token is required" });
+        //     return;
+        // };
+        addTokenBlacklist(accessToken, "AccessToken");         // Add token blacklist for access token
+        addTokenBlacklist(refreshToken, "RefreshToken");      // Add token blacklist for refresh token
         res.clearCookie("accessToken");                                             // clear cookie for accessToken
-        await redisClient.del(username);                                            // clear cookie in redis
+        await redisClient.del(decodedAccessToken.username);                                            // clear cookie in redis
         // verifyToken(refreshToken, REFRESH_TOKEN_SECRET);                            // check if it expire
         res.status(200).json({ status: "success", message: "Log out successfully" });
     } catch (error) {

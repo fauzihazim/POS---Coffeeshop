@@ -11,6 +11,7 @@ app.use(cookieParser('yourSecretKey'));
 
 app.post('/login', login);
 app.get('/getCookie', authenticateAccessToken, authenticateRefreshToken, getCookie);
+// app.get('/getCookie', getCookie);
 app.post('/refreshToken', authenticateRefreshToken, refreshToken);
 // app.post
 app.post('/logOut', authenticateRefreshToken, logOut);

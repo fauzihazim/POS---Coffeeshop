@@ -4,8 +4,6 @@ import jwt, { Secret } from 'jsonwebtoken';
 import { UserPayload } from '../interfaces/User';
 
 const getAccessToken = (req: Request, res: Response) => {
-    console.log("Hey here !");
-    
     return res.locals.accessToken = req.signedCookies.accessToken;
 };
 
@@ -28,6 +26,10 @@ const decoderAccessToken = (req: Request, res: Response, token: string) => {
     return res.locals.decodedAccessToken = jwt.decode(token) as UserPayload;
 };
 
+const checkBlacklistToken = async (token: string, tokenType: "AccessToken" | "RefreshToken") => {
+    return await redisClient.exists(`blacklist:${tokenType}:${token}`);
+}
+
 const decoderRefreshToken = (req: Request, res: Response, token: string) => {
     return res.locals.decodedRefreshToken = jwt.decode(token) as UserPayload;
 };
@@ -36,10 +38,13 @@ export const authenticateAccessToken = async (req: Request, res: Response, next:
     try {
         const accessToken = res.locals.accessToken || getAccessToken(req, res);
         console.log("First access token ", accessToken);
-        
         // const accessToken = getAccessToken(req, res);
         if (!accessToken) {
             res.status(401).json({ status: "failed", message: 'Access token is required' });
+            return;
+        };
+        if (await checkBlacklistToken(accessToken, "AccessToken")) {
+            res.status(401).json({ status: "failed", message: 'Access token is blasklisted. Please login again' });
             return;
         };
         // Verify the access token
@@ -61,7 +66,6 @@ export const authenticateAccessToken = async (req: Request, res: Response, next:
 export const authenticateRefreshToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const decodedAccessToken = res.locals.decodedAccessToken || decoderAccessToken(req, res, res.locals.accessToken || getAccessToken(req, res));
-        // console.log("The ", decodedAccessToken);
         if (!decodedAccessToken) {
             res.status(401).json({ status: "failed", message: "Access token is required" });
             return;
@@ -72,6 +76,10 @@ export const authenticateRefreshToken = async (req: Request, res: Response, next
             res.status(401).json({ status: "failed", message: 'Refresh access token is required' });
             return;
         }
+        if (await checkBlacklistToken(refreshToken, "RefreshToken")) {
+            res.status(401).json({ status: "failed", message: 'Refresh token is blasklisted. Please login again' });
+            return;
+        };
         console.log("refresh token", refreshToken);
         // Verify the refresh token
         const decodedRefreshToken = verifyRefreshToken(req, res, refreshToken as string);
