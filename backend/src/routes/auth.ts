@@ -13,7 +13,7 @@ app.post('/login', login);
 app.get('/getCookie', authenticateAccessToken, authenticateRefreshToken, getCookie);
 app.post('/refreshToken', authenticateRefreshToken, refreshToken);
 // app.post
-app.post('/logOut', logOut);
+app.post('/logOut', authenticateRefreshToken, logOut);
 app.get('/clearCookie', clearCookie);
 
 export default app;
