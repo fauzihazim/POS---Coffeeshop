@@ -5,6 +5,10 @@ import { User } from '../interfaces/User';
 import { DecodedToken } from '../interfaces/Decode';
 import { generateAccessToken, generateRefreshToken, verifyToken } from '../utils/jwtUtils';
 import { redisClient } from '../config/redis';
+import { PrismaClient } from '@prisma/client';
+
+// const app = express();
+const prisma = new PrismaClient();
 
 import { pool } from '../config/db';
 
@@ -14,10 +18,24 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET as Secret;
 export const login = async (req: Request, res: Response) => {
     const { username, password }: { username: string; password: string } = req.body;
     try {
-        const [results] = await pool.query("SELECT username, password, email, role FROM user WHERE username = ?", [username]);
+        // const [results] = await pool.query("SELECT username, password, email, role FROM user WHERE username = ?", [username]);
         // Type assertion for results
-        const result = results as User[];
-        const user = result[0];
+        const user = await prisma.user.findUnique({
+            where: {
+              username: username, // Replace with your unique identifier
+            },
+            select: {
+              username: true,
+              password: true,
+              email: true,
+              role: true,
+              // Add other fields you want to select
+            },
+        }) as User;
+        console.log("The Login User, ", user);
+        
+        // const result = results as User[];
+        // const user = result[0];
         if (user.username && await bcrypt.compare(password, user.password)) {
             const accessToken = generateAccessToken({ username: user.username, email: user.email, role: user.role });
             // set cookies access and refresh token
@@ -64,31 +82,13 @@ const tokenDecoder = (token: string) => {
 };
 
 export const refreshToken = async (req: Request, res: Response) => {
-    // const accessToken = req.signedCookies.accessToken;
     const accessToken = res.locals.accessToken;
     console.log("The accessToken from res", accessToken);
-    
-    // const decodedToken = jwt.verify(accessToken, ACCESS_TOKEN_SECRET) as DecodedToken;
-    // const decodedToken = tokenDecoder(accessToken, ACCESS_TOKEN_SECRET);
-    // console.log('Decoded Token is: ', decodedToken);
-    
-    // const username = decodedToken.username;
-    // const refreshToken: string | null = await redisClient.get(username);
-
-    // if (!refreshToken) {
-    //     res.status(401).json({ status: "failed", message: 'Refresh token is required' });
-    //     return;
-    // };
     const refreshToken = res.locals.refreshToken;
     const decodedToken = res.locals.decodedAccessToken;
     console.log("THe decoded 1 : ", decodedToken);
     try {
         console.log("THe decoded 2 : ", decodedToken);
-        // if (verifyToken(refreshToken, REFRESH_TOKEN_SECRET)) {
-        //     res.status(403).json({ status: "failed", message: "Failed bro" })
-        // };
-        
-        // verifyToken(refreshToken, REFRESH_TOKEN_SECRET);
         const accessToken = generateAccessToken({ username: decodedToken.username, email: decodedToken.email, role: decodedToken.role });
         res.status(200).json({ status: "success", message: "Token refreshed", data: { accessToken } });
     } catch (error) {
@@ -115,7 +115,6 @@ const addTokenBlacklist = async (token: string | unknown, tokenType: "AccessToke
 
 export const logOut = async (req: Request, res: Response) => {
     try {
-        // const accessToken = req.signedCookies.accessToken;
         const accessToken = res.locals.accessToken;
         const refreshToken = res.locals.refreshToken;
         const decodedAccessToken = res.locals.decodedAccessToken;
@@ -123,18 +122,10 @@ export const logOut = async (req: Request, res: Response) => {
             res.status(401).json({ status: "failed", message: "Access token is required" });
             return;
         };
-        // const decodedToken = tokenDecoder(accessToken);
-        // const username = decodedToken.username;
-        // // const refreshToken = await redisClient.get(username);
-        // if (!refreshToken) {
-        //     res.status(401).json({ status: "failed", message: "Refresh token is required" });
-        //     return;
-        // };
         addTokenBlacklist(accessToken, "AccessToken");         // Add token blacklist for access token
         addTokenBlacklist(refreshToken, "RefreshToken");      // Add token blacklist for refresh token
         res.clearCookie("accessToken");                                             // clear cookie for accessToken
         await redisClient.del(decodedAccessToken.username);                                            // clear cookie in redis
-        // verifyToken(refreshToken, REFRESH_TOKEN_SECRET);                            // check if it expire
         res.status(200).json({ status: "success", message: "Log out successfully" });
     } catch (error) {
         res.status(403).json({ status: "failed", message: 'Invalid or expired refresh token' });
