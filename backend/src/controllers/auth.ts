@@ -18,8 +18,6 @@ const REFRESH_TOKEN_SECRET = process.env.REFRESH_TOKEN_SECRET as Secret;
 export const login = async (req: Request, res: Response) => {
     const { username, password }: { username: string; password: string } = req.body;
     try {
-        // const [results] = await pool.query("SELECT username, password, email, role FROM user WHERE username = ?", [username]);
-        // Type assertion for results
         const user = await prisma.user.findUnique({
             where: {
               username: username, // Replace with your unique identifier
@@ -29,13 +27,13 @@ export const login = async (req: Request, res: Response) => {
               password: true,
               email: true,
               role: true,
-              // Add other fields you want to select
             },
         }) as User;
         console.log("The Login User, ", user);
-        
-        // const result = results as User[];
-        // const user = result[0];
+        if (!user) {
+            res.status(401).json({ status: "failed", message: "Invalid Username or Password" });
+            return;
+        }
         if (user.username && await bcrypt.compare(password, user.password)) {
             const accessToken = generateAccessToken({ username: user.username, email: user.email, role: user.role });
             // set cookies access and refresh token
@@ -48,7 +46,7 @@ export const login = async (req: Request, res: Response) => {
             
             res.status(200).json({ status: "success", message: "Login successfully", data: { accessToken, refreshToken } });
         } else {
-            res.status(401).json({ status: "failed", message: "Invalid credential" });
+            res.status(401).json({ status: "failed", message: "Invalid Username or Password" });
         }
     } catch (err) {
         res.status(500).json({ status: "failed", message: "Login error" });
