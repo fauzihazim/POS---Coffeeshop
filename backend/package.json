@@ -6,7 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "start": "ts-node index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "seed": "ts-node --transpile-only prisma/seed.ts"
   },
   "author": "",
   "license": "ISC",

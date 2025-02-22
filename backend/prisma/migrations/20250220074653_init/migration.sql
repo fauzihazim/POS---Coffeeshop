@@ -71,20 +71,20 @@ CREATE TABLE `Item` (
 -- );
 
 -- Insert initial data
-INSERT INTO `User` (username, password, email, firstName, lastName, role)
-VALUES
-('manager1', '$2y$10$yalMDdaMAiGvBbKypnqY4OyeXWiGlLMpqtL6QoZV2DhUPyKELKeGG', 'emailmanager1@gmail.com', 'manager1firstname', 'manager1lastname', 'Manager'),
-('barista1', '$2y$10$uHZ.MtSDAYbWN7sARw8HGOfseWxLcsLYVp2CgJNJvQFWvrsN/nVui', 'emailbarista1@gmail.com', 'barista1firstname', 'barista1lastname', 'Barista'),
-('customer1', '$2y$10$ts0AXk.zC2LxiOgXlT.cN.Ks4moPoGptcNIKZkNeBVr/q2bZ.a4Z2', 'emailcustomer1@gmail.com', 'customer1firstname', 'customer1lastname', 'Customer');
+-- INSERT INTO `User` (username, password, email, firstName, lastName, role)
+-- VALUES
+-- ('manager1', '$2y$10$yalMDdaMAiGvBbKypnqY4OyeXWiGlLMpqtL6QoZV2DhUPyKELKeGG', 'emailmanager1@gmail.com', 'manager1firstname', 'manager1lastname', 'Manager'),
+-- ('barista1', '$2y$10$uHZ.MtSDAYbWN7sARw8HGOfseWxLcsLYVp2CgJNJvQFWvrsN/nVui', 'emailbarista1@gmail.com', 'barista1firstname', 'barista1lastname', 'Barista'),
+-- ('customer1', '$2y$10$ts0AXk.zC2LxiOgXlT.cN.Ks4moPoGptcNIKZkNeBVr/q2bZ.a4Z2', 'emailcustomer1@gmail.com', 'customer1firstname', 'customer1lastname', 'Customer');
 
 
-INSERT INTO `Supplier` (`supplierName`, `supplierContact`) VALUES
-('Supplier 1', 0857901),
-('Supplier 2', 0857902);
+-- INSERT INTO `Supplier` (`supplierName`, `supplierContact`) VALUES
+-- ('Supplier 1', 0857901),
+-- ('Supplier 2', 0857902);
 
-INSERT INTO `Item` (`barcodeItem`, `itemName`, `netto`, `itemUnit`) VALUES
-(909, 'Milk Bendera', 1000, 'milliliters'),
-(910, 'Sugar Gulaku', 500, 'gram');
+-- INSERT INTO `Item` (`barcodeItem`, `itemName`, `netto`, `itemUnit`) VALUES
+-- (909, 'Milk Bendera', 1000, 'milliliters'),
+-- (910, 'Sugar Gulaku', 500, 'gram');
 
 -- INSERT INTO `ItemIn` (`barcodeItem`, `totalItemReceived`, `expired`, `pricePerItem`, `dateItemReceived`, `supplierId`, `receiverId`) VALUES
 -- (909, 100, '2025-12-31', '10000', '2025-02-21 10:00:00', 1, 2),
