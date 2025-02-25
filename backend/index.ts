@@ -6,8 +6,11 @@ config();
 const app = express();
 app.use(express.json());
 
-import authRouter from './src/routes/auth';
+import authRouter from './src/routes/authRoutes';
 app.use(authRouter);
+
+import supplierRoutes from './src/routes/supplierRoutes';
+app.use(supplierRoutes);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello, TypeScript with Node.js!');

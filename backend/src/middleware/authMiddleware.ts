@@ -20,9 +20,6 @@ const verifyRefreshToken = (req: Request, res: Response, token: string) => {
 };
 
 const decoderAccessToken = (req: Request, res: Response, token: string) => {
-    // if (!token) {
-    //     return res.status(401).json({ status: "failed", message: "Access token is required" });
-    // };
     return res.locals.decodedAccessToken = jwt.decode(token) as UserPayload;
 };
 
@@ -34,11 +31,24 @@ const decoderRefreshToken = (req: Request, res: Response, token: string) => {
     return res.locals.decodedRefreshToken = jwt.decode(token) as UserPayload;
 };
 
+export const checkUserIsManager = (req: Request, res: Response) => {
+    const decodedAccessToken = res.locals.decodedAccessToken || decoderAccessToken(req, res, res.locals.accessToken || getAccessToken(req, res));
+    return (decodedAccessToken.role === "Manager");
+};
+
+export const checkUserIsBarista = (req: Request, res: Response) => {
+    const decodedAccessToken = res.locals.decodedAccessToken || decoderAccessToken(req, res, res.locals.accessToken || getAccessToken(req, res));
+    return (decodedAccessToken.role === "Barista");
+};
+
+export const checkUserIsCustomer = (req: Request, res: Response) => {
+    const decodedAccessToken = res.locals.decodedAccessToken || decoderAccessToken(req, res, res.locals.accessToken || getAccessToken(req, res));
+    return (decodedAccessToken.role === "Customer");
+};
+
 export const authenticateAccessToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const accessToken = res.locals.accessToken || getAccessToken(req, res);
-        console.log("First access token ", accessToken);
-        // const accessToken = getAccessToken(req, res);
         if (!accessToken) {
             res.status(401).json({ status: "failed", message: 'Access token is required' });
             return;
@@ -95,5 +105,6 @@ export const authenticateRefreshToken = async (req: Request, res: Response, next
         } else {
             res.status(500).json({ status: "failed", message: 'Internal server error' });
         }
-    }
+    };
 };
+

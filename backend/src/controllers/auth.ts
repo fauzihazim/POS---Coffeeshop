@@ -116,14 +116,10 @@ export const logOut = async (req: Request, res: Response) => {
         const accessToken = res.locals.accessToken;
         const refreshToken = res.locals.refreshToken;
         const decodedAccessToken = res.locals.decodedAccessToken;
-        if (!accessToken) {
-            res.status(401).json({ status: "failed", message: "Access token is required" });
-            return;
-        };
-        addTokenBlacklist(accessToken, "AccessToken");         // Add token blacklist for access token
-        addTokenBlacklist(refreshToken, "RefreshToken");      // Add token blacklist for refresh token
-        res.clearCookie("accessToken");                                             // clear cookie for accessToken
-        await redisClient.del(decodedAccessToken.username);                                            // clear cookie in redis
+        addTokenBlacklist(accessToken, "AccessToken");                                                  // Add token blacklist for access token
+        addTokenBlacklist(refreshToken, "RefreshToken");                                                // Add token blacklist for refresh token
+        res.clearCookie("accessToken");                                                                 // clear cookie for accessToken
+        await redisClient.del(decodedAccessToken.username);                                             // clear cookie in redis
         res.status(200).json({ status: "success", message: "Log out successfully" });
     } catch (error) {
         res.status(403).json({ status: "failed", message: 'Invalid or expired refresh token' });

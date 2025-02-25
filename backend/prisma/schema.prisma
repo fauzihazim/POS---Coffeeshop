@@ -28,10 +28,10 @@ enum Role {
 }
 
 model Supplier {
-  supplierId      Int    @id @default(autoincrement())
-  supplierName    String @unique
+  supplierId      Int       @id @default(autoincrement())
+  supplierName    String    @unique
   supplierContact String
-  isBan           IsBan  @default(false)
+  isBan           IsBan   @default(false)
 
   ItemIn ItemIn[] // Relationship to ItemIn
 }
