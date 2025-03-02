@@ -61,7 +61,7 @@ async function main() {
       status: MenuStatus.available,
       Recipe: {
         create: [
-          { barcodeItem: 911, quantity: 20.0, itemUnit: ItemUnit.gram }, // Coffee Beans
+          { barcodeItem: 911, quantity: 20.0 }, // Coffee Beans
         ],
       },
     },
@@ -75,8 +75,8 @@ async function main() {
       status: MenuStatus.available,
       Recipe: {
         create: [
-          { barcodeItem: 911, quantity: 20.0, itemUnit: ItemUnit.gram }, // Coffee Beans
-          { barcodeItem: 909, quantity: 100.0, itemUnit: ItemUnit.milliliters }, // Milk
+          { barcodeItem: 911, quantity: 20.0 }, // Coffee Beans
+          { barcodeItem: 909, quantity: 100.0 }, // Milk
         ],
       },
     },
@@ -90,9 +90,9 @@ async function main() {
       status: MenuStatus.available,
       Recipe: {
         create: [
-          { barcodeItem: 911, quantity: 20.0, itemUnit: ItemUnit.gram }, // Coffee Beans
-          { barcodeItem: 909, quantity: 100.0, itemUnit: ItemUnit.milliliters }, // Milk
-          { barcodeItem: 912, quantity: 10.0, itemUnit: ItemUnit.milliliters }, // Vanilla Syrup
+          { barcodeItem: 911, quantity: 20.0 }, // Coffee Beans
+          { barcodeItem: 909, quantity: 100.0 }, // Milk
+          { barcodeItem: 912, quantity: 10.0 }, // Vanilla Syrup
         ],
       },
     },
@@ -106,9 +106,9 @@ async function main() {
       status: MenuStatus.available,
       Recipe: {
         create: [
-          { barcodeItem: 911, quantity: 20.0, itemUnit: ItemUnit.gram }, // Coffee Beans
-          { barcodeItem: 909, quantity: 100.0, itemUnit: ItemUnit.milliliters }, // Milk
-          { barcodeItem: 913, quantity: 10.0, itemUnit: ItemUnit.milliliters }, // Caramel Syrup
+          { barcodeItem: 911, quantity: 20.0 }, // Coffee Beans
+          { barcodeItem: 909, quantity: 100.0 }, // Milk
+          { barcodeItem: 913, quantity: 10.0 }, // Caramel Syrup
         ],
       },
     },
@@ -127,4 +127,3 @@ main()
         process.exit(1)
     }
     )
-

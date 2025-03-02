@@ -104,6 +104,7 @@ enum MenuStatus {
   available
   soldOut
   removed
+  recipeChange
 }
 
 model Recipe {
@@ -111,7 +112,6 @@ model Recipe {
   menuId          Int
   barcodeItem     Int
   quantity        Decimal
-  itemUnit        ItemUnit
 
   menu Menu @relation(fields: [menuId], references: [menuId])
 }

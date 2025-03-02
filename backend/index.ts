@@ -12,6 +12,9 @@ app.use(authRouter);
 import supplierRoutes from './src/routes/supplierRoutes';
 app.use(supplierRoutes);
 
+import menuRoute from './src/routes/menuRoutes';
+app.use(menuRoute);
+
 app.get('/', (req: Request, res: Response) => {
     res.send('Hello, TypeScript with Node.js!');
 });
