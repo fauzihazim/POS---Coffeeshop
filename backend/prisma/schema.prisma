@@ -31,7 +31,7 @@ model Supplier {
   supplierId      Int       @id @default(autoincrement())
   supplierName    String    @unique
   supplierContact String
-  isBan           IsBan   @default(false)
+  isBan           IsBan     @default(false)
 
   ItemIn ItemIn[] // Relationship to ItemIn
 }
@@ -88,4 +88,30 @@ model Inventory {
   @@index([barcodeItem], name: "idx_barcodeItem")
   @@index([itemName], name: "idx_itemName")
   @@index([expired], name: "idx_expired")
+}
+
+model Menu {
+  menuId            Int           @id @default(autoincrement())
+  menuName          String        @unique
+  menuDescription   String
+  price             Int
+  status            MenuStatus    @default(available)
+
+  Recipe Recipe[]
+}
+
+enum MenuStatus {
+  available
+  soldOut
+  removed
+}
+
+model Recipe {
+  id              Int       @id @default(autoincrement())
+  menuId          Int
+  barcodeItem     Int
+  quantity        Decimal
+  itemUnit        ItemUnit
+
+  menu Menu @relation(fields: [menuId], references: [menuId])
 }

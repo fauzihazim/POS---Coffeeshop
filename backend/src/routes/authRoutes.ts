@@ -3,10 +3,14 @@ import cookieParser from 'cookie-parser';
 import { login, getCookie, refreshToken, logOut, clearCookie } from "../controllers/auth";
 // import { checkAccessTokenIsRequire, checkBlacklist, checkRefreshTokenIsRequire, decodedAccessToken, verifyRefreshToken, decodedRefreshToken } from '../middleware/authMiddleware';
 import { authenticateAccessToken, authenticateRefreshToken } from '../middleware/authMiddleware';
+// import cors from "cors";
+import cors from 'cors';
 // Middleware
 // const refreshTokenMiddleware = [checkAccessTokenIsRequire, decodedAccessToken, checkRefreshTokenIsRequire, decodedRefreshToken, verifyRefreshToken, checkBlacklist];
 
 const app = express.Router();
+app.use(cors());
+
 app.use(cookieParser('yourSecretKey'));
 
 app.post('/login', login);

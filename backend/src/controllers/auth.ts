@@ -28,8 +28,7 @@ export const login = async (req: Request, res: Response) => {
               email: true,
               role: true,
             },
-        }) as User;
-        console.log("The Login User, ", user);
+        });
         if (!user) {
             res.status(401).json({ status: "failed", message: "Invalid Username or Password" });
             return;
@@ -42,8 +41,6 @@ export const login = async (req: Request, res: Response) => {
             await redisClient.set(user.username, refreshToken, {
                 EX: 24 * 60 * 60, // Set expiration time to 24 hours
             });
-            // console.log("Header", req.headers.authorization);
-            
             res.status(200).json({ status: "success", message: "Login successfully", data: { accessToken, refreshToken } });
         } else {
             res.status(401).json({ status: "failed", message: "Invalid Username or Password" });
