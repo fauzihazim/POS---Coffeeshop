@@ -49,6 +49,7 @@ model Item {
 
   ItemIn   ItemIn[] // Relationship to ItemIn
   Inventory Inventory[] // Relationship to Inventory
+  Recipe Recipe[] // Relationship to Recipe
 }
 
 enum ItemUnit {
@@ -114,4 +115,5 @@ model Recipe {
   quantity        Decimal
 
   menu Menu @relation(fields: [menuId], references: [menuId])
+  item Item @relation(fields: [barcodeItem], references: [barcodeItem])
 }

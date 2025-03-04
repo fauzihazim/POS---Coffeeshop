@@ -88,8 +88,8 @@ export const banSupplier = async (req: Request, res: Response) => {
                 isBan: "true"
             },
         });
-        res.status(201).json({ status: "success", message: "Successfully edited supplier", updateUser });
+        res.status(201).json({ status: "success", message: "Successfully ban supplier", updateUser });
     } catch (error) {
-        res.status(500).json({ status: "failed", message: "Failed edited supplier" });
+        res.status(500).json({ status: "failed", message: "Failed ban supplier" });
     }
 }

@@ -85,6 +85,7 @@ export const refreshToken = async (req: Request, res: Response) => {
     try {
         console.log("THe decoded 2 : ", decodedToken);
         const accessToken = generateAccessToken({ username: decodedToken.username, email: decodedToken.email, role: decodedToken.role });
+        res.cookie('accessToken', accessToken, { signed: true, maxAge: 1200000, httpOnly: true, domain: "localhost", secure: true });
         res.status(200).json({ status: "success", message: "Token refreshed", data: { accessToken } });
     } catch (error) {
         res.status(403).json({ status: "failed", message: 'Invalid or expired refresh token' });

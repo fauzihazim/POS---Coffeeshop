@@ -28,13 +28,13 @@ export const addMenu = async (req: Request, res: Response) => {
         });
         console.log("Menu: ", menuName, " Description: ", menuDescription, " Price: ", menuPrice, " Recipe List ", recipeList);
         // res.status(200).send('Valid request data');
-        res.status(201).json({ status: "success", message: "Successfully edited supplier", newMenu });
+        res.status(201).json({ status: "success", message: "Menu added successfully", newMenu });
     } catch (error) {
         res.status(500).json({ status: "failed", message: "error server", error})
     }
 }
 
-export const editMenu = async (req: Request, res: Response) => {
+export const editRecipe = async (req: Request, res: Response) => {
     // This function will assign old menu status from available or soldOut into recipeChange and create new menu as if the old menu was edited.
     const menuId = parseInt(req.params.id);
     const { menuName, menuDescription, menuPrice, recipeList }: { menuName: string; menuDescription: string; menuPrice: number; recipeList: RecipeItem[] } = req.body;
@@ -43,8 +43,6 @@ export const editMenu = async (req: Request, res: Response) => {
         res.status(400).json({ status: "failed", messsage: "Menu Id can not be null" });
         return;
     };
-    console.log("Menu Id ", menuId);
-
     // Validate recipeList
     if (!recipeList || recipeList.length === 0) {
         res.status(400).json({ status: "failed", message: "Recipe list cannot be empty" });
@@ -61,7 +59,7 @@ export const editMenu = async (req: Request, res: Response) => {
         const result = await prisma.$transaction(async (prisma) => {
             // Operation 1: Update the existing menu
             const editedMenu = await prisma.menu.update({
-                where: { menuId: 1 },
+                where: { menuId: menuId },
                 data: { status: MenuStatus.recipeChange },
             });
           
@@ -77,9 +75,50 @@ export const editMenu = async (req: Request, res: Response) => {
                     },
                 },
             });
+            return newMenu;
         });
-        res.status(201).json({ status: "success", message: "Menu has been changed" })
+        res.status(201).json({ status: "success", message: "Menu changed successfully", data: { menu: result, recipe: recipeList } });
     } catch (error: any) {
-        res.status(500).json({ status: "failed", message: "Failed to update menu" })
+        res.status(500).json({ status: "failed", message: "Failed to edit menu" });
     }
-};
+}
+
+export const deleteMenu = async (req: Request, res: Response) => {
+    // It implement soft delete
+    const menuId = parseInt(req.params.id);
+
+    if (!menuId) {
+        res.status(400).json({ status: "failed", messsage: "Menu Id can not be null" });
+        return;
+    };
+
+    try {
+        const deletingMenu = await prisma.menu.update({
+            where: { menuId: menuId },
+            data: { status: MenuStatus.removed },
+        });
+        res.status(201).json({ status: "success", message: "Menu deleted successfully", data: { menu: deletingMenu } });
+    } catch (error) {
+        res.status(500).json({ status: "failed", message: "Failed to delete menu" });
+    };
+}
+
+export const soldOutMenu = async (req: Request, res: Response) => {
+    // It implement soft delete
+    const menuId = parseInt(req.params.id);
+
+    if (!menuId) {
+        res.status(400).json({ status: "failed", messsage: "Menu Id can not be null" });
+        return;
+    };
+
+    try {
+        const soldOutMenu = await prisma.menu.update({
+            where: { menuId: menuId },
+            data: { status: MenuStatus.soldOut },
+        });
+        res.status(201).json({ status: "success", message: "Menu status updated to sold out", data: { menu: soldOutMenu } });
+    } catch (error) {
+        res.status(500).json({ status: "failed", message: "Failed to delete menu" });
+    };
+}
