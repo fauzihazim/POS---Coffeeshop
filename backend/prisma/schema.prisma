@@ -93,7 +93,7 @@ model Inventory {
 
 model Menu {
   menuId            Int           @id @default(autoincrement())
-  menuName          String        @unique
+  menuName          String
   menuDescription   String
   price             Int
   status            MenuStatus    @default(available)

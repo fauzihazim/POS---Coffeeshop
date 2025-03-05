@@ -15,6 +15,18 @@ export const addMenu = async (req: Request, res: Response) => {
         return;
     };
     try {
+        const existingMenu = await prisma.menu.findFirst({
+            where: {
+                menuName,
+                status: {
+                in: [MenuStatus.available, MenuStatus.soldOut],
+                }
+            },
+        });
+
+        if (existingMenu) {
+            throw new Error(`A menu with the name ${menuName} already exists.`);
+        }
         const newMenu = await prisma.menu.create({
             data: {
               menuName: menuName,
@@ -29,8 +41,8 @@ export const addMenu = async (req: Request, res: Response) => {
         console.log("Menu: ", menuName, " Description: ", menuDescription, " Price: ", menuPrice, " Recipe List ", recipeList);
         // res.status(200).send('Valid request data');
         res.status(201).json({ status: "success", message: "Menu added successfully", newMenu });
-    } catch (error) {
-        res.status(500).json({ status: "failed", message: "error server", error})
+    } catch (error: any) {
+        res.status(500).json({ status: "failed", message: "error server", error: error.message})
     }
 }
 
@@ -58,6 +70,16 @@ export const editRecipe = async (req: Request, res: Response) => {
     try {
         const result = await prisma.$transaction(async (prisma) => {
             // Operation 1: Update the existing menu
+            const checkMenuExisting = await prisma.menu.findFirst({
+                where: {
+                    menuId,
+                    status: MenuStatus.available
+                },
+            });
+            if (!checkMenuExisting) {
+                throw new Error("That menu is not existed or has been changed.");
+            };
+
             const editedMenu = await prisma.menu.update({
                 where: { menuId: menuId },
                 data: { status: MenuStatus.recipeChange },
@@ -79,7 +101,7 @@ export const editRecipe = async (req: Request, res: Response) => {
         });
         res.status(201).json({ status: "success", message: "Menu changed successfully", data: { menu: result, recipe: recipeList } });
     } catch (error: any) {
-        res.status(500).json({ status: "failed", message: "Failed to edit menu" });
+        res.status(500).json({ status: "failed", message: "Failed to edit menu", error: error.message });
     }
 }
 
@@ -93,13 +115,22 @@ export const deleteMenu = async (req: Request, res: Response) => {
     };
 
     try {
+        const checkMenuExisting = await prisma.menu.findFirst({
+            where: {
+                menuId,
+                status: MenuStatus.available
+            },
+        });
+        if (!checkMenuExisting) {
+            throw new Error("That menu is not existed or has been changed.");
+        };
         const deletingMenu = await prisma.menu.update({
-            where: { menuId: menuId },
+            where: { menuId },
             data: { status: MenuStatus.removed },
         });
         res.status(201).json({ status: "success", message: "Menu deleted successfully", data: { menu: deletingMenu } });
-    } catch (error) {
-        res.status(500).json({ status: "failed", message: "Failed to delete menu" });
+    } catch (error: any) {
+        res.status(500).json({ status: "failed", message: "Failed to delete menu", error: error.message });
     };
 }
 
@@ -113,12 +144,21 @@ export const soldOutMenu = async (req: Request, res: Response) => {
     };
 
     try {
+        const checkMenuExisting = await prisma.menu.findFirst({
+            where: {
+                menuId,
+                status: MenuStatus.available
+            },
+        });
+        if (!checkMenuExisting) {
+            throw new Error("That menu is not existed or has been changed.");
+        };
         const soldOutMenu = await prisma.menu.update({
             where: { menuId: menuId },
             data: { status: MenuStatus.soldOut },
         });
         res.status(201).json({ status: "success", message: "Menu status updated to sold out", data: { menu: soldOutMenu } });
-    } catch (error) {
-        res.status(500).json({ status: "failed", message: "Failed to delete menu" });
+    } catch (error: any) {
+        res.status(500).json({ status: "failed", message: "Failed to delete menu", error: error.message });
     };
 }
