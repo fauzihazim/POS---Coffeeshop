@@ -58,7 +58,8 @@ enum ItemUnit {
 }
 
 model ItemIn {
-  itemInId          Int      @id @default(autoincrement())
+  itemInid          Int       @id @default(autoincrement())
+  batchItemInId     String
   barcodeItem       Int
   expired           DateTime
   totalItemReceived Int
@@ -76,19 +77,26 @@ model ItemIn {
 }
 
 model Inventory {
-  inventoryId    Int      @id @default(autoincrement())
-  barcodeItem    Int
-  itemName       String
-  itemInId       Int
-  expired        DateTime
-  remainingItem  Int
+  inventoryId     Int               @id @default(autoincrement())
+  barcodeItem     Int
+  itemName        String
+  itemInId        Int
+  expired         DateTime
+  remainingItem   Int
+  status          StatusInventory   @default(available)
 
-  itemIn ItemIn @relation(fields: [itemInId], references: [itemInId])
+  itemIn ItemIn @relation(fields: [itemInId], references: [itemInid])
   item   Item   @relation(fields: [barcodeItem], references: [barcodeItem])
 
   @@index([barcodeItem], name: "idx_barcodeItem")
   @@index([itemName], name: "idx_itemName")
   @@index([expired], name: "idx_expired")
+}
+
+enum StatusInventory {
+  available
+  expired
+  outOfStock
 }
 
 model Menu {

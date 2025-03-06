@@ -33,11 +33,11 @@ async function main() {
   // Seed ItemIn
   await prisma.itemIn.createMany({
     data: [
-      { barcodeItem: 909, totalItemReceived: 100, expired: new Date('2025-12-31'), pricePerItem: 10000, dateItemReceived: new Date('2025-02-21T10:00:00'), supplierId: 1, receiverId: 2 },
-      { barcodeItem: 910, totalItemReceived: 50, expired: new Date('2025-12-30'), pricePerItem: 25000, dateItemReceived: new Date('2025-02-21T11:00:00'), supplierId: 2, receiverId: 1 },
-      { barcodeItem: 911, totalItemReceived: 20, expired: new Date('2025-12-19'), pricePerItem: 9500, dateItemReceived: new Date('2025-02-20T10:00:00'), supplierId: 1, receiverId: 2 },
-      { barcodeItem: 912, totalItemReceived: 30, expired: new Date('2025-12-25'), pricePerItem: 15000, dateItemReceived: new Date('2025-02-22T09:00:00'), supplierId: 2, receiverId: 1 },
-      { barcodeItem: 913, totalItemReceived: 40, expired: new Date('2025-12-28'), pricePerItem: 18000, dateItemReceived: new Date('2025-02-22T10:00:00'), supplierId: 1, receiverId: 2 },
+      { batchItemInId: "input1", barcodeItem: 909, totalItemReceived: 100, expired: new Date('2025-12-31'), pricePerItem: 10000, dateItemReceived: new Date('2025-02-21T10:00:00'), supplierId: 1, receiverId: 2 },
+      { batchItemInId: "input1", barcodeItem: 910, totalItemReceived: 50, expired: new Date('2025-12-30'), pricePerItem: 25000, dateItemReceived: new Date('2025-02-21T11:00:00'), supplierId: 2, receiverId: 1 },
+      { batchItemInId: "input1", barcodeItem: 911, totalItemReceived: 20, expired: new Date('2025-12-19'), pricePerItem: 9500, dateItemReceived: new Date('2025-02-20T10:00:00'), supplierId: 1, receiverId: 2 },
+      { batchItemInId: "input1", barcodeItem: 912, totalItemReceived: 30, expired: new Date('2025-12-25'), pricePerItem: 15000, dateItemReceived: new Date('2025-02-22T09:00:00'), supplierId: 2, receiverId: 1 },
+      { batchItemInId: "input1", barcodeItem: 913, totalItemReceived: 40, expired: new Date('2025-12-28'), pricePerItem: 18000, dateItemReceived: new Date('2025-02-22T10:00:00'), supplierId: 1, receiverId: 2 },
     ],
   })
 

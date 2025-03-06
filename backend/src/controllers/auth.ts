@@ -20,13 +20,14 @@ export const login = async (req: Request, res: Response) => {
     try {
         const user = await prisma.user.findUnique({
             where: {
-              username: username, // Replace with your unique identifier
+                username: username, // Replace with your unique identifier
             },
             select: {
-              username: true,
-              password: true,
-              email: true,
-              role: true,
+                userId: true,
+                username: true,
+                password: true,
+                email: true,
+                role: true,
             },
         });
         if (!user) {
@@ -34,7 +35,7 @@ export const login = async (req: Request, res: Response) => {
             return;
         }
         if (user.username && await bcrypt.compare(password, user.password)) {
-            const accessToken = generateAccessToken({ username: user.username, email: user.email, role: user.role });
+            const accessToken = generateAccessToken({ userId: user.userId, username: user.username, email: user.email, role: user.role });
             // set cookies access and refresh token
             res.cookie('accessToken', accessToken, { signed: true, maxAge: 1200000, httpOnly: true, domain: "localhost", secure: true });
             const refreshToken = generateRefreshToken({ username: user.username, email: user.email, role: user.role });
