@@ -1,8 +1,8 @@
 import express from 'express';
-import { itemIn } from '../controllers/item';
+import { addItemIn } from '../controllers/item';
 import { authenticateAccessToken, isManagerOrBarista } from '../middleware/authMiddleware';
 const app = express.Router();
 
-app.post('/itemIn/addItemIn', authenticateAccessToken, isManagerOrBarista, itemIn);
+app.post('/itemIn/addItemIn', authenticateAccessToken, isManagerOrBarista, addItemIn);
 
 export default app;

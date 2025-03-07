@@ -44,11 +44,11 @@ async function main() {
   // Seed Inventory
   await prisma.inventory.createMany({
     data: [
-      { barcodeItem: 909, itemName: 'Milk Bendera', itemInId: 1, expired: new Date('2025-12-31'), remainingItem: 100 },
-      { barcodeItem: 910, itemName: 'Sugar Gulaku', itemInId: 2, expired: new Date('2025-12-30'), remainingItem: 50 },
-      { barcodeItem: 911, itemName: 'Arabica Coffee Beans', itemInId: 3, expired: new Date('2025-12-19'), remainingItem: 20 },
-      { barcodeItem: 912, itemName: 'Vanilla Syrup', itemInId: 4, expired: new Date('2025-12-25'), remainingItem: 30 },
-      { barcodeItem: 913, itemName: 'Caramel Syrup', itemInId: 5, expired: new Date('2025-12-28'), remainingItem: 40 },
+      { barcodeItem: 909, itemInId: 1, expired: new Date('2025-12-31'), remainingItem: 100 },
+      { barcodeItem: 910, itemInId: 2, expired: new Date('2025-12-30'), remainingItem: 50 },
+      { barcodeItem: 911, itemInId: 3, expired: new Date('2025-12-19'), remainingItem: 20 },
+      { barcodeItem: 912, itemInId: 4, expired: new Date('2025-12-25'), remainingItem: 30 },
+      { barcodeItem: 913, itemInId: 5, expired: new Date('2025-12-28'), remainingItem: 40 },
     ],
   })
 

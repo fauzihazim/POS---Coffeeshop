@@ -79,7 +79,7 @@ model ItemIn {
 model Inventory {
   inventoryId     Int               @id @default(autoincrement())
   barcodeItem     Int
-  itemName        String
+  // itemName        String
   itemInId        Int
   expired         DateTime
   remainingItem   Int
@@ -89,7 +89,7 @@ model Inventory {
   item   Item   @relation(fields: [barcodeItem], references: [barcodeItem])
 
   @@index([barcodeItem], name: "idx_barcodeItem")
-  @@index([itemName], name: "idx_itemName")
+  // @@index([itemName], name: "idx_itemName")
   @@index([expired], name: "idx_expired")
 }
 
