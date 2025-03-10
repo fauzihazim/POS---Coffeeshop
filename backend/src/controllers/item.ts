@@ -10,23 +10,35 @@ const prisma = new PrismaClient();
 export const addItemIn = async (req: Request, res: Response) => {
     const { itemIn }: { itemIn: ItemIn[] } = req.body;
     const batchItemInId =  uuidv4();
-    // Extract local date and time components
-    const expTime: Date = new Date();
-    expTime.setDate(expTime.getDate() + 5);
-    const year: number = expTime.getFullYear();
-    const month: string = String(expTime.getMonth() + 1).padStart(2, '0');  // Months are 0-based, so add 1
-    const day: string = String(expTime.getDate()).padStart(2, '0');     // Add 5 days to check expired
-    const hours: string = String(expTime.getHours()).padStart(2, '0');
-    const minutes: string = String(expTime.getMinutes()).padStart(2, '0');
-    const seconds: string = String(expTime.getSeconds()).padStart(2, '0');
-    const milliseconds: string = String(expTime.getMilliseconds()).padStart(3, '0');
+    // Extract local date to get dateNow
+    const now: Date = new Date();
+    now.setDate(now.getDate());
+    const yearNow: number = now.getFullYear();
+    const monthNow: string = String(now.getMonth() + 1).padStart(2, '0');           // Months are 0-based, so add 1
+    const dayNow: string = String(now.getDate()).padStart(2, '0');
+    const hoursNow: string = String(now.getHours()).padStart(2, '0');
+    const minuteNow: string = String(now.getMinutes()).padStart(2, '0');
+    const secondNow: string = String(now.getSeconds()).padStart(2, '0');
+    // dateNow
+    const dateNowString = `${yearNow}-${monthNow}-${dayNow}T${hoursNow}:${minuteNow}:${secondNow}Z`
+    console.log("Date ", dateNowString);
+    
+    const dateNow = new Date(dateNowString);
+    console.log("Date Now: ", dateNow);
+
+    // Extract local date to get checkExpiredTime
+    const checkExpTime: Date = new Date();
+    checkExpTime.setDate(checkExpTime.getDate() + 5);                                     // Add 5 days to check expired
+    const checkYearExp: number = checkExpTime.getFullYear();
+    const checkMonthExp: string = String(checkExpTime.getMonth() + 1).padStart(2, '0');   // Months are 0-based, so add 1
+    const checkDayExp: string = String(checkExpTime.getDate()).padStart(2, '0');
 
     // Format the local datetime as a string
-    const dateString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`
-    console.log("Date ", dateString);
+    const dateExpString = `${checkYearExp}-${checkMonthExp}-${checkDayExp}T00:00:00Z`
+    console.log("Date check expired string: ", dateExpString);
     
-    const dateNow = new Date(dateString);
-    console.log("Date Now: ", dateNow);
+    const dateExp = new Date(dateExpString);
+    console.log("Date check expired : ", dateExpString);
     
     const decodedAccessToken = res.locals.decodedAccessToken;
     const receiverId: number = decodedAccessToken.userId;
@@ -37,7 +49,7 @@ export const addItemIn = async (req: Request, res: Response) => {
             if (item.totalItemReceived <= 0) {
                 throw new Error(`Invalid totalItemReceived for item with barcode ${item.barcodeItem}`);
             };
-            if (expired <= dateNow) {
+            if (expired <= dateExp) {
                 throw new Error(`Your item with barcode ${item.barcodeItem}, has been expired`);
             };
             return {
@@ -80,12 +92,13 @@ export const addItemIn = async (req: Request, res: Response) => {
     }
 }
 
+// Check expired every 00:00 o'clock
 cron.schedule('00 00 * * *', async () => {
     const now: Date = new Date();
     const year: number = now.getFullYear();
     const month: string = String(now.getMonth() + 1).padStart(2, '0');  // Months are 0-based, so add 1
     const day: string = String(now.getDate()).padStart(2, '0');
-    const dateString = `${year}-${month}-${day} 00:00:00.000Z`
+    const dateString = `${year}-${month}-${day}T00:00:00.000Z`
 
     const dateNow = new Date(dateString);
     console.log("Date Now: ", dateNow);
