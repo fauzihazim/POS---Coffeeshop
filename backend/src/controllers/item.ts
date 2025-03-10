@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { ItemIn, PrismaClient, StatusInventory } from "@prisma/client";
 import { redisClient } from '../config/redis';
 import { v4 as uuidv4 } from 'uuid';
+import cron from 'node-cron';
 
 // const prisma = New Prisma()
 const prisma = new PrismaClient();
@@ -10,20 +11,21 @@ export const addItemIn = async (req: Request, res: Response) => {
     const { itemIn }: { itemIn: ItemIn[] } = req.body;
     const batchItemInId =  uuidv4();
     // Extract local date and time components
-    const now: Date = new Date();
-    const year: number = now.getFullYear();
-    const month: string = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based, so add 1
-    const day: string = String(now.getDate()).padStart(2, '0');
-    const hours: string = String(now.getHours()).padStart(2, '0');
-    const minutes: string = String(now.getMinutes()).padStart(2, '0');
-    const seconds: string = String(now.getSeconds()).padStart(2, '0');
-    const milliseconds: string = String(now.getMilliseconds()).padStart(3, '0');
+    const expTime: Date = new Date();
+    expTime.setDate(expTime.getDate() + 5);
+    const year: number = expTime.getFullYear();
+    const month: string = String(expTime.getMonth() + 1).padStart(2, '0');  // Months are 0-based, so add 1
+    const day: string = String(expTime.getDate()).padStart(2, '0');     // Add 5 days to check expired
+    const hours: string = String(expTime.getHours()).padStart(2, '0');
+    const minutes: string = String(expTime.getMinutes()).padStart(2, '0');
+    const seconds: string = String(expTime.getSeconds()).padStart(2, '0');
+    const milliseconds: string = String(expTime.getMilliseconds()).padStart(3, '0');
 
     // Format the local datetime as a string
-    const date = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}Z`
-    console.log("Date ", date);
+    const dateString = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`
+    console.log("Date ", dateString);
     
-    const dateNow = new Date(date);
+    const dateNow = new Date(dateString);
     console.log("Date Now: ", dateNow);
     
     const decodedAccessToken = res.locals.decodedAccessToken;
@@ -77,3 +79,34 @@ export const addItemIn = async (req: Request, res: Response) => {
         res.status(500).json({ status: "failed", message: error.message })
     }
 }
+
+cron.schedule('00 00 * * *', async () => {
+    const now: Date = new Date();
+    const year: number = now.getFullYear();
+    const month: string = String(now.getMonth() + 1).padStart(2, '0');  // Months are 0-based, so add 1
+    const day: string = String(now.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day} 00:00:00.000Z`
+
+    const dateNow = new Date(dateString);
+    console.log("Date Now: ", dateNow);
+
+    console.log("Date ", dateNow);
+
+    const getPrisma = await prisma.inventory.updateMany({
+        where: {
+            OR: [
+                {expired: {
+                    lt: dateNow
+                },
+            },
+            { expired: dateNow },
+
+            ], status: StatusInventory.available
+        },
+        data: {
+            status: StatusInventory.expired,
+        }
+    });
+    console.log("Check Expired running");
+    
+}, { timezone: 'Asia/Jakarta' });
