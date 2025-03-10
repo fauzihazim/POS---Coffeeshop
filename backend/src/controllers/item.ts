@@ -9,7 +9,23 @@ const prisma = new PrismaClient();
 export const addItemIn = async (req: Request, res: Response) => {
     const { itemIn }: { itemIn: ItemIn[] } = req.body;
     const batchItemInId =  uuidv4();
-    const dateNow = new Date(Date.now());
+    // Extract local date and time components
+    const now: Date = new Date();
+    const year: number = now.getFullYear();
+    const month: string = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based, so add 1
+    const day: string = String(now.getDate()).padStart(2, '0');
+    const hours: string = String(now.getHours()).padStart(2, '0');
+    const minutes: string = String(now.getMinutes()).padStart(2, '0');
+    const seconds: string = String(now.getSeconds()).padStart(2, '0');
+    const milliseconds: string = String(now.getMilliseconds()).padStart(3, '0');
+
+    // Format the local datetime as a string
+    const date = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}Z`
+    console.log("Date ", date);
+    
+    const dateNow = new Date(date);
+    console.log("Date Now: ", dateNow);
+    
     const decodedAccessToken = res.locals.decodedAccessToken;
     const receiverId: number = decodedAccessToken.userId;
     try {
@@ -60,5 +76,4 @@ export const addItemIn = async (req: Request, res: Response) => {
     } catch (error: any) {
         res.status(500).json({ status: "failed", message: error.message })
     }
-    
 }
